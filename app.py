@@ -377,7 +377,7 @@ leader_agent = create_agent(
 
         search_products,
 
-        get_productss
+        get_products
 
     ]
 
