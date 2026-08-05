@@ -2,7 +2,6 @@
 # SMART SHOPPING ASSISTANT
 # Retail & E-Commerce using GenAI
 # ==============================
-import re
 import warnings
 import requests
 import streamlit as st
@@ -47,7 +46,7 @@ st.sidebar.success("API Loaded Successfully")
 # GEMINI MODEL
 # ==============================
 model = ChatGoogleGenerativeAI(
-    model="gemini-3.5-flash",
+    model="gemini-2.5-flash",
     google_api_key=GOOGLE_API_KEY
 )
 # ==============================
