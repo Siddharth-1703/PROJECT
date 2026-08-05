@@ -2,57 +2,39 @@
 # SMART SHOPPING ASSISTANT
 # Retail & E-Commerce using GenAI
 # ==============================
-
 import re
 import warnings
-
 import requests
 import streamlit as st
 import streamlit.components.v1 as components
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import create_agent
 from tavily import TavilyClient
-
 warnings.filterwarnings("ignore")
-
 # ==============================
 # PAGE CONFIGURATION
 # ==============================
-
 st.set_page_config(
     page_title="Smart Shopping Assistant",
     page_icon="🛍️",
     layout="wide"
 )
-
 st.title("🛒 Smart Shopping Recommendation Assistant")
-
 st.write("""
 This AI Assistant recommends products based on
-
 ✔ Budget
-
 ✔ Requirements
-
 ✔ Product Features
-
 ✔ Comparison
-
 ✔ AI Buying Suggestion
-
 ✔ Alternatives
-
 ✔ Latest Product Search
 """)
-
 st.divider()
-
 # ==============================
 # SIDEBAR - API KEYS
 # ==============================
-
 st.sidebar.title("API Configuration")
-
 GOOGLE_API_KEY = st.sidebar.text_input("Gemini API Key", type="password")
 TAVILY_API_KEY = st.sidebar.text_input("Tavily API Key", type="password")
 
@@ -61,48 +43,34 @@ if not all([GOOGLE_API_KEY, TAVILY_API_KEY]):
     st.stop()
 
 st.sidebar.success("API Loaded Successfully")
-
 # ==============================
 # GEMINI MODEL
 # ==============================
-# NOTE: "gemini-3.5-flash" is not a valid model id and will raise an error
-# at request time. Use a model your API key actually has access to
-# (e.g. "gemini-2.0-flash" or "gemini-1.5-flash"). Change if needed.
-
 model = ChatGoogleGenerativeAI(
     model="gemini-3.5-flash",
     google_api_key=GOOGLE_API_KEY
 )
-
 # ==============================
 # SHOPPING DETAILS
 # ==============================
-
 st.sidebar.title("Shopping Preferences")
-
 category = st.sidebar.selectbox(
     "Product Category",
     ["electronics", "jewelery", "men's clothing", "women's clothing"]
 )
-
 budget = st.sidebar.number_input(
     "Budget",
     min_value=100,
     max_value=1000000,
     value=50000
 )
-
 brand = st.sidebar.text_input("Preferred Brand", placeholder="Optional")
-
 rating = st.sidebar.slider("Minimum Rating", 1, 5, 4)
-
 st.markdown("## Product Requirements")
-
 requirements = st.text_area(
     "Describe your requirements",
     height=180,
     placeholder="""Example:
-
 Gaming Laptop
 RTX 4060
 16GB RAM
@@ -112,13 +80,10 @@ Video Editing
 Budget 70000
 """
 )
-
 st.divider()
-
 # ==============================
 # USER QUERY
 # ==============================
-
 user_query = f"""
 Budget : {budget}
 Category : {category}
@@ -128,12 +93,9 @@ Minimum Rating : {rating}
 Requirements :
 {requirements}
 """
-
-
 # ===========================================
 # TOOL 1 : SEARCH LATEST PRODUCTS USING TAVILY
 # ===========================================
-
 def search_products(query: str) -> dict:
     """Search latest products, reviews and buying guides."""
     try:
@@ -142,12 +104,9 @@ def search_products(query: str) -> dict:
     except Exception as e:
         st.warning(f"Tavily search failed: {e}")
         return {"results": []}
-
-
 # ===========================================
 # TOOL 2 : GET PRODUCTS
 # ===========================================
-
 def get_products(category: str) -> list:
     """Fetch products from FakeStore API."""
     try:
@@ -158,17 +117,14 @@ def get_products(category: str) -> list:
     except requests.RequestException as e:
         st.warning(f"Could not fetch products: {e}")
     return []
-
-
 # ===========================================
 # TOOL 3 : BUDGET / RATING / BRAND FILTER
 # ===========================================
-
 def filter_products(products, budget, min_rating=1, brand=""):
     """Filter products by budget, minimum rating and (optional) brand keyword."""
     result = []
     brand_lower = brand.strip().lower()
-
+    
     for product in products:
         price = float(product.get("price", 0))
         product_rating = float(product.get("rating", {}).get("rate", 0))
@@ -184,49 +140,37 @@ def filter_products(products, budget, min_rating=1, brand=""):
         result.append(product)
 
     return result
-
-
 # ===========================================
 # TOOL 4 : PRODUCT COMPARISON
 # ===========================================
-
 def compare_products(products):
     """Compare products using Gemini."""
     if not products:
         return "No products available to compare."
-
     prompt = f"""
 You are an AI Shopping Assistant.
-
 Compare the following products.
 Return output as a Markdown table with columns:
 Price | Features | Pros | Cons | Rating | Best Choice
-
 Products:
 {products}
 """
     response = model.invoke(prompt)
     return response.content
-
-
 # ===========================================
 # TOOL 5 : PRODUCT RECOMMENDATION
 # ===========================================
-
 def recommend_products(products, requirements):
     """Recommend best products based on user requirements."""
     if not products:
         return "No products available to recommend."
-
     prompt = f"""
 You are an AI Shopping Recommendation Assistant.
 
 Requirements:
 {requirements}
-
 Products:
 {products}
-
 Recommend Top 5 Products.
 For every product provide (in Markdown):
 - Product Name
@@ -238,41 +182,31 @@ For every product provide (in Markdown):
 """
     response = model.invoke(prompt)
     return response.content
-
-
 # ===========================================
 # TOOL 6 : ALTERNATIVE PRODUCTS
 # ===========================================
-
 def alternative_products(products):
     """Suggest alternative products."""
     if not products:
         return "No products available to suggest alternatives for."
-
     prompt = f"""
 Suggest affordable alternatives (in Markdown) for the following products.
-
 Products:
 {products}
 """
     response = model.invoke(prompt)
     return response.content
-
-
 # ===========================================
 # HELPER: clean model output before rendering
 # ===========================================
-
 def clean_llm_output(text) -> str:
     """Strip ```html / ``` code fences the model sometimes wraps output in.
-
     Defensive against non-string input: some LangChain/Gemini responses
     return `content` as None or as a list of content-part dicts instead
     of a plain string.
     """
     if text is None:
         return ""
-
     if isinstance(text, list):
         parts = []
         for part in text:
@@ -281,42 +215,31 @@ def clean_llm_output(text) -> str:
             elif isinstance(part, dict):
                 parts.append(str(part.get("text", "")))
         text = "\n".join(p for p in parts if p)
-
+        
     if not isinstance(text, str):
         text = str(text)
-
     text = text.strip()
     text = re.sub(r"^```(?:html|markdown)?\s*", "", text)
     text = re.sub(r"\s*```$", "", text)
 
-    # Markdown treats any line indented 4+ spaces as a code block, which
-    # is exactly how the model tends to format nested <div>s. Strip
-    # leading whitespace from every line so it renders as HTML instead
-    # of showing up as a literal code block.
+    
     text = "\n".join(line.lstrip() for line in text.splitlines())
 
     return text
-
-
 # ===========================================
 # CREATE LEADER AGENT
 # ===========================================
-
 leader_agent = create_agent(
     model=model,
     tools=[search_products, get_products]
 )
-
-
 # ===========================================
 # MAIN SHOPPING AGENT
 # ===========================================
-
 def shopping_assistant(agent, query):
     """Leader Agent responsible for generating the final shopping recommendation."""
     prompt = f"""
 You are Smart Shopping Recommendation Assistant.
-
 Your responsibilities are:
 1. Understand customer requirements.
 2. Understand budget.
@@ -328,9 +251,7 @@ Your responsibilities are:
 8. Mention Cons.
 9. Give Buying Verdict.
 10. Show latest product information if required.
-
 Return output only in clean HTML (no markdown, no code fences).
-
 User Query:
 {query}
 """
@@ -346,21 +267,15 @@ User Query:
         content = str(response)
 
     return clean_llm_output(content)
-
-
 # ===========================================
 # LOAD PRODUCTS
 # ===========================================
-
 products = get_products(category)
 filtered_products = filter_products(products, budget, rating, brand)
-
 # ===========================================
 # BUTTON
 # ===========================================
-
 if st.button("🛒 Recommend Products", use_container_width=True):
-
     with st.spinner("Finding Best Products..."):
 
         latest = search_products(f"{category} best products under {budget}")
