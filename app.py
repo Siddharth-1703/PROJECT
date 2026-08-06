@@ -2,6 +2,7 @@
 # SMART SHOPPING ASSISTANT
 # Retail & E-Commerce using GenAI
 # ==============================
+import re
 import warnings
 import requests
 import streamlit as st
